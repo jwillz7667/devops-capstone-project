@@ -132,9 +132,14 @@ class TestAccountService(TestCase):
 
     def test_get_account_not_found(self):
         """It should return 404 when the Account does not exist"""
-        response = self.client.get(f"{BASE_URL}/0")
+        response = self.client.get(f"{BASE_URL}/999999")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertIn("0", response.get_json()["message"])
+        self.assertIn("999999", response.get_json()["message"])
+
+    def test_method_not_allowed(self):
+        """It should reject unsupported HTTP methods with 405"""
+        response = self.client.patch(BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def test_create_account_location(self):
         """It should return the new Account URL in the Location header"""
