@@ -151,3 +151,61 @@ class TestAccountService(TestCase):
         retrieved = self.client.get(location)
         self.assertEqual(retrieved.status_code, status.HTTP_200_OK)
         self.assertEqual(retrieved.get_json(), account)
+
+    def test_update_account(self):
+        """It should Update and persist every mutable Account field"""
+        account = self._create_accounts(1)[0]
+        updated = AccountFactory().serialize()
+        updated["id"] = account.id + 1000
+        response = self.client.put(f"{BASE_URL}/{account.id}", json=updated)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        updated["id"] = account.id
+        self.assertEqual(response.get_json(), updated)
+        db.session.remove()
+        self.assertEqual(Account.find(account.id).serialize(), updated)
+
+    def test_update_account_not_found(self):
+        """It should not create an Account through PUT"""
+        response = self.client.put(f"{BASE_URL}/999999", json=AccountFactory().serialize())
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(Account.all(), [])
+
+    def test_update_account_invalid_data(self):
+        """It should reject invalid updates without modifying persisted data"""
+        account = self._create_accounts(1)[0]
+        original = account.serialize()
+        invalid_payloads = [
+            {"name": "Incomplete"},
+            [],
+            dict(original, name=""),
+            dict(original, name=42),
+            dict(original, email=None),
+            dict(original, address="x" * 257),
+            dict(original, phone_number=42),
+            dict(original, phone_number="x" * 33),
+            dict(original, date_joined="2026-02-30"),
+            dict(original, date_joined=42),
+        ]
+        for payload in invalid_payloads:
+            with self.subTest(payload=payload):
+                response = self.client.put(f"{BASE_URL}/{account.id}", json=payload)
+                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+                db.session.remove()
+                self.assertEqual(Account.find(account.id).serialize(), original)
+
+    def test_update_account_unsupported_media_type(self):
+        """It should require a JSON update document"""
+        account = self._create_accounts(1)[0]
+        response = self.client.put(f"{BASE_URL}/{account.id}", data="not json")
+        self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
+    def test_update_account_optional_fields(self):
+        """It should allow an omitted phone number and default joining date"""
+        account = self._create_accounts(1)[0]
+        response = self.client.put(
+            f"{BASE_URL}/{account.id}",
+            json={"name": "Updated Customer", "email": "customer@example.com", "address": "1 Test Street"},
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNone(response.get_json()["phone_number"])
+        self.assertTrue(response.get_json()["date_joined"])
