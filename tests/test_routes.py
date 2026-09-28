@@ -18,6 +18,7 @@ DATABASE_URI = os.getenv(
 )
 
 BASE_URL = "/accounts"
+HTTPS_ENVIRON = {"wsgi.url_scheme": "https"}
 
 
 ######################################################################
@@ -85,6 +86,20 @@ class TestAccountService(TestCase):
         self.assertEqual(resp.status_code, 200)
         data = resp.get_json()
         self.assertEqual(data["status"], "OK")
+
+    def test_security_headers(self):
+        """It should return the required browser security headers over HTTPS."""
+        response = self.client.get("/", environ_overrides=HTTPS_ENVIRON)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        headers = {
+            "X-Frame-Options": "SAMEORIGIN",
+            "X-Content-Type-Options": "nosniff",
+            "Content-Security-Policy": "default-src 'self'; object-src 'none'",
+            "Referrer-Policy": "strict-origin-when-cross-origin",
+        }
+        for key, value in headers.items():
+            with self.subTest(header=key):
+                self.assertEqual(response.headers.get(key), value)
 
     def test_create_account(self):
         """It should Create a new Account"""
