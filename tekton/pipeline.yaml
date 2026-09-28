@@ -81,3 +81,24 @@ spec:
       runAfter:
         - lint
         - tests
+
+    - name: deploy
+      workspaces:
+        - name: manifest-dir
+          workspace: pipeline-workspace
+      taskRef:
+        name: openshift-client
+        kind: ClusterTask
+      params:
+        - name: SCRIPT
+          value: |
+            #!/usr/bin/env bash
+            set -euo pipefail
+            echo "Deploying the image built by this pipeline..."
+            oc set image --local -f deploy/deployment.yaml \
+              accounts="$(params.build-image)" -o yaml | oc apply -f -
+            oc apply -f deploy/service.yaml -f deploy/route.yaml
+            oc rollout status deployment/accounts --timeout=180s
+            oc get pods -l app=accounts
+      runAfter:
+        - build
