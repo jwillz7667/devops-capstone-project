@@ -226,3 +226,16 @@ class TestAccountService(TestCase):
             response = self.client.delete(f"{BASE_URL}/999999")
             self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
             self.assertEqual(response.data, b"")
+
+    def test_list_accounts(self):
+        """It should List every Account as a JSON array"""
+        accounts = self._create_accounts(5)
+        response = self.client.get(BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertCountEqual(response.get_json(), [account.serialize() for account in accounts])
+
+    def test_list_accounts_empty(self):
+        """It should return an empty list, not 404, when no Accounts exist"""
+        response = self.client.get(BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.get_json(), [])
