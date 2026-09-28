@@ -8,10 +8,12 @@ Test cases can be run with the following:
 import os
 import logging
 from unittest import TestCase
+from unittest.mock import patch
 from tests.factories import AccountFactory
 from service.common import status  # HTTP Status Codes
 from service.models import db, Account, init_db
 from service.routes import app
+from service import talisman
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql://postgres:postgres@localhost:5432/postgres"
@@ -34,11 +36,14 @@ class TestAccountService(TestCase):
         app.config["DEBUG"] = False
         app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
         app.logger.setLevel(logging.CRITICAL)
+        cls.original_force_https = talisman.force_https
+        talisman.force_https = False
         init_db(app)
 
     @classmethod
     def tearDownClass(cls):
         """Runs once before test suite"""
+        talisman.force_https = cls.original_force_https
 
     def setUp(self):
         """Runs before each test"""
@@ -100,6 +105,13 @@ class TestAccountService(TestCase):
         for key, value in headers.items():
             with self.subTest(header=key):
                 self.assertEqual(response.headers.get(key), value)
+
+    def test_https_redirect(self):
+        """It should redirect HTTP requests while preserving their path and query."""
+        with patch.object(talisman, "force_https", True):
+            response = self.client.get("/accounts?example=1")
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        self.assertEqual(response.headers["Location"], "https://localhost/accounts?example=1")
 
     def test_create_account(self):
         """It should Create a new Account"""
