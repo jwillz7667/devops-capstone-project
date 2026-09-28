@@ -17,7 +17,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: accounts
-          image: us.icr.io/sn-labs-jwilliams119/accounts:1
+          image: IMAGE_NAME_HERE
           ports:
             - name: http
               containerPort: 8080

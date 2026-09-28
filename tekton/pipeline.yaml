@@ -15,6 +15,9 @@ spec:
     - name: repo-url
     - name: branch
       default: main
+    - name: build-image
+      description: Fully qualified image name in the assigned training registry
+      type: string
   tasks:
     - name: init
       workspaces:
@@ -36,3 +39,66 @@ spec:
         value: $(params.branch)
       runAfter:
         - init
+
+    - name: lint
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+      taskRef:
+        name: flake8
+      params:
+        - name: image
+          value: python:3.9-slim
+        - name: args
+          value: ["--count", "--max-complexity=10", "--max-line-length=127", "--statistics"]
+      runAfter:
+        - clone
+
+    - name: tests
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+      taskRef:
+        name: nose
+      params:
+        - name: database_uri
+          value: sqlite:///test.db
+        - name: args
+          value: "-v --with-spec --spec-color"
+      runAfter:
+        - clone
+
+    - name: build
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+      taskRef:
+        name: buildah
+        kind: ClusterTask
+      params:
+        - name: IMAGE
+          value: $(params.build-image)
+      runAfter:
+        - lint
+        - tests
+
+    - name: deploy
+      workspaces:
+        - name: manifest-dir
+          workspace: pipeline-workspace
+      taskRef:
+        name: openshift-client
+        kind: ClusterTask
+      params:
+        - name: SCRIPT
+          value: |
+            #!/usr/bin/env bash
+            set -euo pipefail
+            echo "Deploying the image built by this pipeline..."
+            oc set image --local -f deploy/deployment.yaml \
+              accounts="$(params.build-image)" -o yaml | oc apply -f -
+            oc apply -f deploy/service.yaml -f deploy/route.yaml
+            oc rollout status deployment/accounts --timeout=180s
+            oc get pods -l app=accounts
+      runAfter:
+        - build
