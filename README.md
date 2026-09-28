@@ -102,6 +102,33 @@ The Account model contains the following fields:
 
 Complete this microservice by implementing REST API's for `READ`, `UPDATE`, `DELETE`, and `LIST` while maintaining **95%** code coverage. In true **Test Driven Development** fashion, first write tests for the code you "wish you had", and then write the code to make them pass.
 
+## Continuous Delivery in the Assigned OpenShift Lab
+
+`tekton/pipeline.yaml` connects cleanup, clone, parallel lint/tests, Buildah,
+and deployment tasks. The test database is isolated SQLite; the application
+uses the existing `postgresql` Secret and service. Do not bind the pipeline
+workspace to a developer checkout: cleanup intentionally removes its contents.
+
+The assigned lab must already provide the `pipeline` service account and the
+`buildah` and `openshift-client` ClusterTasks. Install the course's `git-clone`
+and `flake8` catalog tasks, then apply the repository resources:
+
+```bash
+oc apply -f tekton/pvc.yaml -f tekton/tasks.yaml -f tekton/pipeline.yaml
+tkn pipeline start cd-pipeline \
+  -p repo-url=https://github.com/jwillz7667/devops-capstone-project.git \
+  -p branch=main \
+  -p build-image=image-registry.openshift-image-registry.svc:5000/$SN_ICR_NAMESPACE/accounts:1 \
+  -w name=pipeline-workspace,claimName=pipelinerun-pvc \
+  -s pipeline --showlog
+```
+
+`deploy/deployment.yaml` deliberately contains the course's `IMAGE_NAME_HERE`
+placeholder. The deploy task resolves it with `oc set image --local` before
+applying the manifest and waits for `oc rollout status` to succeed. For a
+standalone manual deployment, resolve that image reference first; do not apply
+the placeholder directly. Keep credentials out of source control and logs.
+
 ## Local Kubernetes Development
 
 This repo can also be used for local Kubernetes development. It is not advised that you run these commands in the Cloud IDE environment. The purpose of these commands are to simulate the Cloud IDE environment locally on your computer. 
