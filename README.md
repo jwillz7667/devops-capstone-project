@@ -1,15 +1,15 @@
-# DevOps Capstone Template
+# devops-capstone-project
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python 3.9](https://img.shields.io/badge/Python-3.9-green.svg)](https://shields.io/)
 
-This repository contains the starter code for the project in [**IBM-CD0285EN-SkillsNetwork DevOps Capstone Project**](https://www.coursera.org/learn/devops-capstone-project?specialization=devops-and-software-engineering) which is part of the [**IBM DevOps and Software Engineering Professional Certificate**](https://www.coursera.org/professional-certificates/devops-and-software-engineering)
+Customer accounts microservice for an e-commerce application, developed through Agile planning, test-driven REST API development, continuous integration, application security, containerization, Kubernetes deployment, and automated delivery.
 
-## Usage
+This project starts from the official template for [**IBM-CD0285EN-SkillsNetwork DevOps Capstone Project**](https://www.coursera.org/learn/devops-capstone-project?specialization=devops-and-software-engineering), part of the [**IBM DevOps and Software Engineering Professional Certificate**](https://www.coursera.org/professional-certificates/devops-and-software-engineering). Implementation and verification progress are tracked in this repository's issues and project board. Planned features are not claims of completed functionality.
 
-You should use this template to start your DevOps Capstone project. It contains all of the code that you will need to get started.
+## Template Provenance
 
-Do Not fork this code! It is meant to be used by pressing the  <span style=color:white;background:green>**Use this Template**</span> button in GitHub. This will copy the code to your own repository with no connection back to the original repository like a fork would. This is what you want.
+Created as a new repository from `ibm-developer-skills-network/aolwx-devops-capstone-template`, not as a fork. The starter supplies the account model and create endpoint; subsequent stories add and verify the remaining operations.
 
 ## Development Environment
 
