@@ -6,12 +6,23 @@ and SQL database
 """
 import sys
 from flask import Flask
+from flask_talisman import Talisman
+from flask_cors import CORS
 from service import config
 from service.common import log_handlers
 
 # Create Flask application
 app = Flask(__name__)
 app.config.from_object(config)
+talisman = Talisman(app)
+# The lab's wildcard policy is limited to public metadata, not account data.
+CORS(
+    app,
+    resources={r"^/$": {"origins": "*"}},
+    methods=["GET", "HEAD", "OPTIONS"],
+    supports_credentials=False,
+    send_wildcard=True,
+)
 
 # Import the routes After the Flask app is created
 # pylint: disable=wrong-import-position, cyclic-import, wrong-import-order

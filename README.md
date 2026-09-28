@@ -13,6 +13,12 @@ This project starts from the official template for [**IBM-CD0285EN-SkillsNetwork
 
 Created as a new repository from `ibm-developer-skills-network/aolwx-devops-capstone-template`, not as a fork. The starter supplies the account model and create endpoint; subsequent stories add and verify the remaining operations.
 
+## Security Lab Scope
+
+Talisman enables HTTPS redirects, HSTS on secure responses, and the required browser security headers. The test fixture temporarily disables redirects only within the route test class and restores the previous value afterward; a separate test checks the actual redirect behavior.
+
+Flask-CORS allows non-credentialed cross-origin reads of the public metadata endpoint (`/`) only. Account endpoints do not inherit this wildcard policy. CORS is not authentication or authorization. This course service uses synthetic data and a legacy Python 3.9/Flask dependency set required by the labs; it is not ready to store real customer data or be deployed as a production service.
+
 ## Development Environment
 
 These labs are designed to be executed in the IBM Developer Skills Network Cloud IDE with OpenShift. Please use the links provided in the Coursera Capstone project to access the lab environment.
