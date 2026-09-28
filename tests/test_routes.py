@@ -209,3 +209,20 @@ class TestAccountService(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIsNone(response.get_json()["phone_number"])
         self.assertTrue(response.get_json()["date_joined"])
+
+    def test_delete_account(self):
+        """It should Delete an Account with no response body"""
+        account, retained = self._create_accounts(2)
+        response = self.client.delete(f"{BASE_URL}/{account.id}")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(response.data, b"")
+        self.assertIsNone(Account.find(account.id))
+        self.assertIsNotNone(Account.find(retained.id))
+        self.assertEqual(self.client.get(f"{BASE_URL}/{account.id}").status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_account_idempotent(self):
+        """It should return 204 even when the Account is already absent"""
+        for _ in range(2):
+            response = self.client.delete(f"{BASE_URL}/999999")
+            self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+            self.assertEqual(response.data, b"")
