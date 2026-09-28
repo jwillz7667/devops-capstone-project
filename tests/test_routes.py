@@ -123,4 +123,31 @@ class TestAccountService(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
-    # ADD YOUR TEST CASES HERE ...
+    def test_get_account(self):
+        """It should Read an Account by its identifier"""
+        account = self._create_accounts(1)[0]
+        response = self.client.get(f"{BASE_URL}/{account.id}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.get_json(), account.serialize())
+
+    def test_get_account_not_found(self):
+        """It should return 404 when the Account does not exist"""
+        response = self.client.get(f"{BASE_URL}/999999")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn("999999", response.get_json()["message"])
+
+    def test_method_not_allowed(self):
+        """It should reject unsupported HTTP methods with 405"""
+        response = self.client.patch(BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_create_account_location(self):
+        """It should return the new Account URL in the Location header"""
+        response = self.client.post(BASE_URL, json=AccountFactory().serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        account = response.get_json()
+        location = response.headers["Location"]
+        self.assertTrue(location.endswith(f"{BASE_URL}/{account['id']}"))
+        retrieved = self.client.get(location)
+        self.assertEqual(retrieved.status_code, status.HTTP_200_OK)
+        self.assertEqual(retrieved.get_json(), account)
