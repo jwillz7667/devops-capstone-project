@@ -113,6 +113,28 @@ class TestAccountService(TestCase):
         self.assertEqual(response.status_code, status.HTTP_302_FOUND)
         self.assertEqual(response.headers["Location"], "https://localhost/accounts?example=1")
 
+    def test_cors_security(self):
+        """It should return the lab CORS header for public service metadata."""
+        response = self.client.get("/", environ_overrides=HTTPS_ENVIRON)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.headers.get("Access-Control-Allow-Origin"), "*")
+
+    def test_cors_public_metadata_without_credentials(self):
+        """It should allow a cross-origin metadata read without credential sharing."""
+        response = self.client.get(
+            "/", headers={"Origin": "https://example.com"}, environ_overrides=HTTPS_ENVIRON
+        )
+        self.assertEqual(response.headers.get("Access-Control-Allow-Origin"), "*")
+        self.assertNotIn("Access-Control-Allow-Credentials", response.headers)
+
+    def test_cors_does_not_expose_accounts(self):
+        """It should not extend the public metadata CORS policy to account data."""
+        response = self.client.get(
+            BASE_URL, headers={"Origin": "https://example.com"}, environ_overrides=HTTPS_ENVIRON
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertNotIn("Access-Control-Allow-Origin", response.headers)
+
     def test_create_account(self):
         """It should Create a new Account"""
         account = AccountFactory()
